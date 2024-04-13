@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+	ignorecase = true
+	precomposeunicode = true
+[remote "master"]
+	url = https://github.com/divyanshrao38/AI-Resume-Classifier.git
+	fetch = +refs/heads/*:refs/remotes/master/*

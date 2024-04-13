@@ -1,0 +1,8 @@
+flask
+joblib
+pdfminer.six
+openai
+flask_cors
+pymongo
+bcrypt
+tinydb

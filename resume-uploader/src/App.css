@@ -31,7 +31,7 @@ button {
   margin-top: 20px;
 }
 body {
-  background-color: #343a40; /* Dark gray */
-  color: white; /* Ensure text is readable on dark background */
+  background-color: #121212; /* Dark background */
+  color: white; /* Light text */
 }
 

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Form, Dropdown, DropdownButton, Alert, Container, Row, Col, ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { Form, Input, Button, Radio, Dropdown, Menu, Alert, Layout, Typography } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
+
+const { Header, Content } = Layout;
+const { Title } = Typography;
 
 function LoginOrRegister() {
     const [email, setEmail] = useState('');
@@ -13,13 +16,13 @@ function LoginOrRegister() {
     const navigate = useNavigate();
     const { login } = useAuth();
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const handleSubmit = async () => {
         setErrorMessage('');
         const path = isRegistering ? '/register' : '/login';
     
         try {
             await login(email, password, role, path);
+            setIsRegistering(false);
             navigate(isRegistering ? '/login' : '/Landing'); // Redirect users accordingly
         } catch (error) {
             console.error('Error:', error);
@@ -27,56 +30,61 @@ function LoginOrRegister() {
         }
     };
 
+    const menu = (
+        <Menu onClick={e => setRole(e.key)}>
+            <Menu.Item key="Admin">Admin</Menu.Item>
+            <Menu.Item key="Candidate">Candidate</Menu.Item>
+        </Menu>
+    );
+
     return (
-        <Container className="py-5">
-            <Row>
-                <Col md={{ span: 6, offset: 3 }}>
-                    <h2>{isRegistering ? 'Register' : 'Login'}</h2>
-                    <ToggleButtonGroup type="radio" name="options" defaultValue={1}>
-                        <ToggleButton id="tbg-btn-1" value={1} variant="outline-secondary" onClick={() => setIsRegistering(false)}>Login</ToggleButton>
-                        <ToggleButton id="tbg-btn-2" value={2} variant="outline-secondary" onClick={() => setIsRegistering(true)}>Register</ToggleButton>
-                    </ToggleButtonGroup>
-                    <Form onSubmit={handleSubmit} className="mt-3">
-                        <Form.Group className="mb-3" controlId="formBasicEmail">
-                            <Form.Label>Email address</Form.Label>
-                            <Form.Control
+        <Layout className="layout" style={{ minHeight: '100vh' }}>
+            <Content style={{ padding: '50px 20px' }}>
+                <div style={{ maxWidth: 300, margin: '0 auto' }}>
+                    <Title level={2}>{isRegistering ? 'Register' : 'Login'}</Title>
+                    <Radio.Group value={isRegistering} onChange={e => setIsRegistering(e.target.value)} style={{ marginBottom: 20 }}>
+                        <Radio.Button value={false}>Login</Radio.Button>
+                        <Radio.Button value={true}>Register</Radio.Button>
+                    </Radio.Group>
+                    <Form onFinish={handleSubmit} layout="vertical">
+                        <Form.Item label="Email address" name="email">
+                            <Input
                                 type="email"
                                 placeholder="Enter email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={e => setEmail(e.target.value)}
                             />
-                        </Form.Group>
+                        </Form.Item>
 
-                        <Form.Group className="mb-3" controlId="formBasicPassword">
-                            <Form.Label>Password</Form.Label>
-                            <Form.Control
-                                type="password"
+                        <Form.Item label="Password" name="password">
+                            <Input.Password
                                 placeholder="Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={e => setPassword(e.target.value)}
                             />
-                        </Form.Group>
+                        </Form.Item>
 
                         {isRegistering && (
-                            <DropdownButton
-                                id="dropdown-basic-button"
-                                title={role}
-                                onSelect={(eventKey) => setRole(eventKey)}
-                                className="mb-3"
-                            >
-                                <Dropdown.Item eventKey="Admin">Admin</Dropdown.Item>
-                                <Dropdown.Item eventKey="Candidate">Candidate</Dropdown.Item>
-                            </DropdownButton>
+                            <Form.Item label="Role">
+                                <Dropdown overlay={menu}>
+                                    <Button>
+                                        {role} <DownOutlined />
+                                    </Button>
+                                </Dropdown>
+                            </Form.Item>
                         )}
 
-                        <Button variant="primary" type="submit">
-                            {isRegistering ? 'Register' : 'Login'}
-                        </Button>
-                        {errorMessage && <Alert variant="danger" className="mt-3">{errorMessage}</Alert>}
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit" block>
+                                {isRegistering ? 'Register' : 'Login'}
+                            </Button>
+                        </Form.Item>
+
+                        {errorMessage && (
+                            <Alert message={errorMessage} type="error" showIcon />
+                        )}
                     </Form>
-                </Col>
-            </Row>
-        </Container>
+                </div>
+            </Content>
+        </Layout>
     );
 }
 

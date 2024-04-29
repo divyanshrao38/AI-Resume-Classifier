@@ -30,7 +30,7 @@ function LoginOrRegister() {
       if (!response.ok) {
         throw new Error(data.message || 'Failed to process request');
       }
-
+      setIsRegistering(false)
       navigate(isRegistering ? '/login' : '/upload'); // Redirect users accordingly
     } catch (error) {
       console.error('Error:', error);

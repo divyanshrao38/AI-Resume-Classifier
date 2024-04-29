@@ -32,13 +32,17 @@ function AdminView() {
         throw new Error('Failed to create opening');
       }
       const result = await response.json();
-      setOpenings([...openings, result]);
+      setOpenings([...openings, newOpening]);
       setShowModal(false);
+      
+
     } catch (error) {
       console.error('Error creating opening:', error);
     }
   };
-
+  const handleViewResume = (email) => {
+    window.open(`http://localhost:5000/getCandidateResume?email=${email}`, '_blank');
+  };
   const fetchCandidates = (applicants) => {
     try {
       setCandidates(applicants);
@@ -46,10 +50,6 @@ function AdminView() {
     } catch (error) {
       console.error('Failed to fetch candidates:', error);
     }
-  };
-
-  const handleViewResume = (email) => {
-    window.open(`http://localhost:5000/getCandidateResume?email=${email}`, '_blank');
   };
 
   return (
@@ -73,7 +73,7 @@ function AdminView() {
               </tr>
             </thead>
             <tbody>
-              {openings.map((opening, index) => (
+              {openings?.map((opening, index) => (
                 <tr key={index}>
                   <td>{opening.title}</td>
                   <td>{opening.opening_id}</td>
@@ -90,6 +90,52 @@ function AdminView() {
         </Col>
       </Row>
 
+      {/* Modal for creating a new application */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" className="text-white" contentClassName="bg-dark">
+        <Modal.Header closeButton className="border-secondary">
+          <Modal.Title>Create New Application</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter title"
+                value={newOpening.title}
+                onChange={e => setNewOpening({ ...newOpening, title: e.target.value })}
+                className="bg-dark text-white"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Opening ID</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter Opening ID"
+                value={newOpening.openingId}
+                onChange={e => setNewOpening({ ...newOpening, opening_id: e.target.value })}
+                className="bg-dark text-white"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Enter description"
+                value={newOpening.description}
+                onChange={e => setNewOpening({ ...newOpening, description: e.target.value })}
+                className="bg-dark text-white"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer className="border-secondary">
+          <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
+          <Button variant="primary" onClick={handleCreateOpening}>Create</Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Modal for viewing candidates */}
       <Modal show={showCandidatesModal} onHide={() => setShowCandidatesModal(false)} size="lg" className="text-white" contentClassName="bg-dark">
         <Modal.Header closeButton className="border-secondary">
@@ -102,15 +148,20 @@ function AdminView() {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Score</th>
-                <th>Resume</th>
+                <th>Feedback</th>
+                <th>Predicted Category</th>
+                <th>linkedin Profile</th>
               </tr>
             </thead>
             <tbody>
-              {candidates.map((candidate, index) => (
+              {candidates?.map((candidate, index) => (
                 <tr key={index}>
                   <td>{candidate.name}</td>
                   <td>{candidate.email}</td>
                   <td>{candidate.resume_score}</td>
+                  <td>{candidate.resume_feedback}</td>
+                  <td>{candidate.predicted_category}</td>
+                  <td>{candidate.linkedin_profile}</td>
                   <td>
                     <Button variant="primary" onClick={() => handleViewResume(candidate.email)}>
                       View Resume

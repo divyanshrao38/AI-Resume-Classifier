@@ -4,12 +4,22 @@ import { AuthProvider } from './contexts/AuthContext';
 import MainComponent from './components/MainComponent';
 import CustomNavbar from './components/Navbar';
 import Login from './components/Login'; // Assume this component handles login.
+import { ConfigProvider, theme, Button, Card } from "antd";
+const { defaultAlgorithm, darkAlgorithm } = theme;
 
 function App() {
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const handleClick = () => {
+    setIsDarkMode((previousValue) => !previousValue);
+   };
   return (
+    <ConfigProvider theme={{
+      algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
+    }}>
+
     <Router>
       <AuthProvider>
-        <CustomNavbar />
+        <CustomNavbar handleClick={handleClick} isDarkMode={isDarkMode} />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
@@ -19,6 +29,13 @@ function App() {
         </Routes>
       </AuthProvider>
     </Router>
+    {/* <Card style={{ width: "max-content" }}>
+      <Button onClick={handleClick}>
+        Change Theme to {isDarkMode ? "Light" : "Dark"}
+      </Button>
+    </Card> */}
+
+    </ConfigProvider>
   );
 }
 

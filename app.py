@@ -258,10 +258,10 @@ def analyze_resume_with_openai(resume_text, job_description):
     # Make sure to set your OpenAI API key in environment variables
     # openai.api_key = os.environ.get('OPENAI_API_KEY')
 
-    prompt = f"Given the job description: {job_description}, evaluate the following resume to give ONLY a numerical score out of 10 and NOTHING else  {resume_text}"
+    prompt = f"Given the job description: {job_description}, evaluate the following resume to give ONLY a NUMERICAL SCORE out of 10 and NOTHING else  {resume_text}"
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4-turbo",
         # response_format={ "type": "json_object" },
         messages=[
             {"role": "system", "content": "You are a helpful resume analyzing assistant."},
@@ -288,10 +288,10 @@ def analyze_resume_with_openai_feedback(resume_text, job_description):
     # Make sure to set your OpenAI API key in environment variables
     # openai.api_key = os.environ.get('OPENAI_API_KEY')
 
-    prompt = f"Given the job description: {job_description}, evaluate the following resume to give ONLY feedback on resume as per job description in thrid person and NOTHING else  {resume_text}"
+    prompt = f"Given the job description: {job_description}, evaluate the following resume to give ONLY feedback on resume as per job description in thrid person in IN ONLY 100 WORDS and NOTHING else  {resume_text}"
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4-turbo",
         # response_format={ "type": "json_object" },
         messages=[
             {"role": "system", "content": "You are a helpful resume analyzing assistant."},

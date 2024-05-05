@@ -5,6 +5,7 @@ import MainComponent from './components/MainComponent';
 import CustomNavbar from './components/Navbar';
 import Login from './components/Login'; // Assume this component handles login.
 import { ConfigProvider, theme, Button, Card } from "antd";
+import Footer from './components/footer';
 const { defaultAlgorithm, darkAlgorithm } = theme;
 
 function App() {
@@ -20,13 +21,15 @@ function App() {
     <Router>
       <AuthProvider>
         <CustomNavbar handleClick={handleClick} isDarkMode={isDarkMode} />
+        <br/>
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/landing" element={<MainComponent />} />
+          <Route path="/landing" element={<MainComponent />}  />
           {/* Redirect users to the login page by default */}
           <Route path="*" element={<Navigate replace to="/login" />} />
         </Routes>
+        <Footer />
       </AuthProvider>
     </Router>
     {/* <Card style={{ width: "max-content" }}>

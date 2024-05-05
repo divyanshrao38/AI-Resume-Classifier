@@ -5,15 +5,24 @@ import AdminView from './AdminView';
 import UserView from './UserView';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../App.css';
+import { useNavigate } from 'react-router-dom';
 
 function MainComponent() {
   const { user } = useAuth();
-    console.log('user', user)   
+  const navigate = useNavigate();
+
   if (!user) {
-    return <p>Please login to view this page.</p>;
+    console.log('user in', user)
+    window.location.href = '/login';
   }
+  else{
+  
+
+   
 
   return user.type === 'Admin' ? <AdminView /> : <UserView />;
+  }  
 }
+
 
 export default MainComponent;

@@ -101,6 +101,7 @@ function AdminView() {
       key: 'name',
       fixed: 'left',
     },
+    Table.SELECTION_COLUMN,
     {
       title: 'Email',
       dataIndex: 'email',
@@ -110,7 +111,19 @@ function AdminView() {
       title: 'Score',
       dataIndex: 'resume_score',
       key: 'resume_score',
-      render: score => ( <Tag color={score >= 0.5 ? 'green' : 'red'}>{score}</Tag> ),
+      render: score => ( score < 5 && <Tag color='red'>{score}</Tag> || score < 7 && <Tag color='orange'>{score}</Tag> || <Tag color='green'>{score}</Tag>),
+    },
+    {
+      title: 'Missing Keywords',
+      dataIndex: 'missing_keywords',
+      key: 'missing_keywords',
+      render: missing_keywords => ( <Tag color='red'>{missing_keywords}</Tag> ),
+    },
+    {
+      title: 'Matching Keywords',
+      dataIndex: 'matching_keywords',
+      key: 'matching_keywords',
+      render: matching_keywords => ( <Tag color='green'>{matching_keywords}</Tag> ),
     },
     {
       title: 'Feedback',
@@ -124,12 +137,14 @@ function AdminView() {
           {resume_feedback}
         </Tooltip>
       ),
+      
       // width:"200px",
       // minHeight:"100px",
       // ellipsis:"true"
     },
+    Table.EXPAND_COLUMN,
     {
-      title: 'Predicted Category',
+      title: 'Closest Category',
       dataIndex: 'predicted_category',
       key: 'predicted_category',
       render: category => ( <Tag color='blue'>{category}</Tag> )
@@ -143,7 +158,7 @@ function AdminView() {
       },
       render: (linkedin_profile) => (
         <Tooltip placement="topLeft" title={linkedin_profile}>
-          {linkedin_profile}
+         <a target="_blank" href={linkedin_profile}> {linkedin_profile} </a>
         </Tooltip>
       ),
     },
@@ -152,6 +167,7 @@ function AdminView() {
       title: 'Resume Download',
       key: 'resume_download',
       fixed: 'right',
+      width:"180px",
       render: (_, record) => (
         
         <Button icon={<DownloadOutlined />} size={"small"} onClick={() => handleViewResume(record.email)}>Download Resume</Button>
@@ -163,6 +179,7 @@ function AdminView() {
       title: 'Actions',
       key: 'actions',
       fixed: 'right',
+      width:"150px",
       render: (_, record) => (
         
         <Button icon={<SelectOutlined /> } size={"small"} onClick={() => handleNextSteps(record.email)}>Next steps</Button>
@@ -173,17 +190,23 @@ function AdminView() {
   ];
 
   return (
-    <Layout className="layout"  >
-      <Header style={{  padding: 0 }}>
+    <Layout className="layout" style={{paddingTop : '50px'}} >
+      {/* <Header style={{  padding: 0 }}>
         <Title level={3} style={{ margin: '16px' }}>Admin Dashboard</Title>
-      </Header>
+      </Header> */}
       <Content style={{ margin: '24px 16px 0' }}>
         <Spin spinning={isLoading} size="large">
         <div style={{ padding: 24 }}>
+        <Title level={2} >Admin Dashboard</Title>
+        <p>Create open applications and Review Submitted applications.</p>
           <Button type="primary" onClick={showModal}>
             Create New Application
           </Button>
+          <br />
+          <br />
+          <Tag color="#f50"> Caution: The Category, Resume Feedback and Score have been generated using AI, Please Verify the Candidate Manually before moving to next steps</Tag>
           <Table style={{ padding: 24}} columns={columns} dataSource={openings} rowKey="opening_id"  />
+         
 
           <Modal title="Create New Application" visible={isModalVisible} onOk={handleCreateOpening} onCancel={handleCancel}>
             <Form layout="vertical">
@@ -200,7 +223,24 @@ function AdminView() {
           </Modal>
 
           <Modal title="View Candidates" visible={isCandidateModalVisible} onCancel={handleCancel} footer={null}  width={1500}>
-            <Table columns={candidateColumns} dataSource={candidates} rowKey="email"   />
+            <Table columns={candidateColumns} dataSource={candidates} rowKey="email" 
+            expandable={{
+              expandedRowRender: (record) => (
+                <p
+                  style={{
+                    margin: 0,
+                  }}
+                >
+                  {record.resume_feedback}
+                </p>
+              ),
+            }} 
+            rowSelection={{}}
+            scroll={{
+              x: 1300,
+            }}
+
+            />
           </Modal>
         </div>
         </Spin>

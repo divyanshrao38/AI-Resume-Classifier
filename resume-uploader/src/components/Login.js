@@ -38,7 +38,7 @@ function LoginOrRegister() {
     );
 
     return (
-        <Layout className="layout" style={{ minHeight: '100vh' }}>
+        <Layout className="layout" style={{ minHeight: '90vh' }}>
             <Content style={{ padding: '50px 20px' }}>
                 <div style={{ maxWidth: 300, margin: '0 auto' }}>
                     <Title level={2}>{isRegistering ? 'Register' : 'Login'}</Title>

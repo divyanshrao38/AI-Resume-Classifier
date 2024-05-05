@@ -5,11 +5,10 @@ import os
 from pdfminer.high_level import extract_text
 from openai import OpenAI
 from flask_cors import CORS
-import base64
 from io import BytesIO
 from sqlalchemy.orm import joinedload
 import joblib
-import re
+from utils import filter_text_by_keywords, compare_keywords, cleanResume, extract_text_from_pdf
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
@@ -45,6 +44,8 @@ class Applicant(db.Model):
     opening_id = db.Column(db.Integer, db.ForeignKey('opening.id'), nullable=False)
     resume = db.Column(db.LargeBinary)  # Optional: Store resumes as binary data if needed
     resume_feedback = db.Column(db.String(10000), nullable=False)
+    matching_keywords = db.Column(db.String(1000), nullable=False)
+    missing_keywords = db.Column(db.String(1000), nullable=False)
 
 
 
@@ -53,15 +54,7 @@ clf = joblib.load('./model/resumeclassifier.pkl')
 vectorizer = joblib.load('./model/vectorizer.pkl')
 label_encoder = joblib.load('./model/labelencoder.pkl')
 
-def cleanResume(resumeText):
-    resumeText = re.sub('httpS+s*', ' ', resumeText)  # remove URLs
-    resumeText = re.sub('RT|cc', ' ', resumeText)  # remove RT and cc
-    resumeText = re.sub('#S+', '', resumeText)  # remove hashtags
-    resumeText = re.sub('@S+', '  ', resumeText)  # remove mentions
-    resumeText = re.sub('[%s]' % re.escape("""!"#$%&'()*+,-./:;<=>?@[]^_`{|}~"""), ' ', resumeText)  # remove punctuations
-    resumeText = re.sub(r'[^x00-x7f]',r' ', resumeText)
-    resumeText = re.sub('s+', ' ', resumeText)  # remove extra whitespace
-    return resumeText
+
 
 def predict_category(resume_text):
     # Clean the resume text
@@ -91,18 +84,8 @@ def create_tables():
 
     db.create_all()
 
-# Routes
-# @app.route('/getResume', methods=['GET'])
-# def get_resume():
-#     applicant_id = request.args.get('applicantId')
-#     applicant = Applicant.query.filter_by(id=applicant_id).first()
-#     if not applicant:
-#         return jsonify({"error": "Applicant not found"}), 404
 
-#     # Return the resume as a file
-#     return send_file(BytesIO(applicant.resume), attachment_filename='resume.pdf', as_attachment=True)    
 
-from flask import send_file, request, abort
 
 @app.route('/getCandidateResume', methods=['GET'])
 def get_candidate_resume():
@@ -114,11 +97,6 @@ def get_candidate_resume():
     applicant = Applicant.query.filter_by(email=email).first()
     if not applicant:
         return "No applicant found with that email", 404
-
-    # Check if the applicant has a resume stored
-    print("applicant", applicant.name, applicant.email, applicant.resume_score, applicant.resume)
-    # if not applicant.resume:
-    #     return "No resume available for this applicant", 404
 
     # Create a BytesIO object from the binary resume data
     resume_file = BytesIO(applicant.resume)
@@ -132,16 +110,12 @@ def get_candidate_resume():
         mimetype='application/pdf'
     )
 
-
 @app.route('/getAllOpenings', methods=['GET'])
 def get_all_openings():
     openings = Opening.query.options(joinedload(Opening.applicants)).all()
     openings_data = []
     
     for opening in openings:
-        for applicant in opening.applicants:
-            print("applicant", applicant.name, applicant.email, applicant.resume_score, applicant.resume)
-        print("openings", opening.applicants)
         openings_data.append({
             'opening_id': opening.opening_id,
             'title': opening.title,
@@ -154,11 +128,12 @@ def get_all_openings():
                     'resume_score': applicant.resume_score,
                     'predicted_category': applicant.predicted_category,
                     'resume_feedback': applicant.resume_feedback if applicant.resume_feedback else "No feedback available",
+                    'matching_keywords': applicant.matching_keywords,
+                    'missing_keywords': applicant.missing_keywords
                 } for applicant in opening.applicants
             ]
         })
     return jsonify(openings_data), 200
-
 
 @app.route('/createOpening', methods=['POST'])
 def create_opening():
@@ -209,11 +184,6 @@ def apply():
     
     resume_text = extract_text(temp_pdf_path)
 
-    # resume_text = extract_text_from_pdf(file)  # Extract text using the stream
-    # resume_data = file
-    print("resume_text", len(resume_text))
-    # print("resume_data", len(resume_data))
-    print("file", len(request.files['resume'].read()) )
     # Retrieve the opening by opening_id
     opening = Opening.query.filter_by(opening_id=opening_id).first()
     if not opening:
@@ -229,7 +199,11 @@ def apply():
     resume_score = analyze_resume_with_openai(resume_text, job_description)
     resume_feedback = analyze_resume_with_openai_feedback(resume_text, job_description)
     category = predict_category(resume_text)
-    print("resume_Category", category)
+    # Extract technical keywords from the job description and resume
+    jd_keywords = filter_text_by_keywords(job_description)
+    resume_keywords = filter_text_by_keywords(resume_text)
+    matching_keywords, missing_keywords = compare_keywords(jd_keywords, resume_keywords)
+
     # Create a new applicant record including the binary data of the resume
     new_applicant = Applicant(
         name=name,
@@ -239,20 +213,15 @@ def apply():
         opening_id=opening.id,
         resume=resume_data,
         resume_feedback=resume_feedback,  # Store the binary data of the resume
-        predicted_category=category
+        predicted_category=category,
+        matching_keywords= ", ".join(matching_keywords) if matching_keywords else "None",
+        missing_keywords= ", ".join(missing_keywords) if missing_keywords else "None"
     )
     db.session.add(new_applicant)
     db.session.commit()
 
     return jsonify({"message": "Application submitted successfully", "score": resume_score}), 200
 
-# Helper functions
-def extract_text_from_pdf(file):
-    temp_pdf_path = "temp_file.pdf"
-    file.save(temp_pdf_path)
-    text = extract_text(temp_pdf_path)
-    os.remove(temp_pdf_path)
-    return text
 
 def analyze_resume_with_openai(resume_text, job_description):
     # Make sure to set your OpenAI API key in environment variables
@@ -273,14 +242,6 @@ def analyze_resume_with_openai(resume_text, job_description):
 
     # Assuming you want to return the entire response for now, but you may want to extract specific information
     # Convert the OpenAI API response to a dictionary if not already
-    print("response", response)
-
-    # response_data = response if isinstance(response, dict) else response.__dict__
-    # print("response_data", response_data)
-    # Optionally, extract specific fields from the response_data to return
-    # For example, you might only want to return text from the first choice
-    # feedback = response_data['choices'][0]['message']['content']
-
     return response.choices[0].message.content
 
 

@@ -63,11 +63,13 @@ function UserView() {
   };
 
   const handleSubmit = async () => {
-    setIsLoading(true);
+    
     if(modalContent === 'response') {
       setIsModalVisible(false)
+     
     }
     else{
+    setIsLoading(true);
     const formData = new FormData();
     formData.append('name', applicant.name);
     formData.append('resume', applicant.resume);
@@ -122,8 +124,8 @@ function UserView() {
   ];
 
   return (
-    <Layout className="layout" style={{ minHeight: '100vh', }}>
-      <Content style={{ padding: '20px 50px', marginTop: 64 }}>
+    <Layout className="layout" style={{ minHeight: '100vh', paddingTop:"50px" }}>
+      <Content style={{ padding: '20px 50px' }}>
       <Spin spinning={isLoading} size="large">
         <div style={{ padding: 24, minHeight: 380 }}>
           <Title level={2}>User Dashboard</Title>

@@ -11,7 +11,7 @@ function CustomNavbar({ handleClick, isDarkMode}) {
     <Header style={{ position: 'fixed', zIndex: 1, width: '100%', padding: 0 }}>
       <div className="logo" />
       <Menu  mode="horizontal" defaultSelectedKeys={['1']}>
-        <Menu.Item key="1" disabled>
+        <Menu.Item key="1" href="#">
           AI Resume Classifier
         </Menu.Item>
 
